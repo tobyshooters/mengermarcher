@@ -11,16 +11,30 @@
 
 using namespace std;
 
+// SDF Constants
+// -------------
+
+const float sphere_radius = 1.2;
+const float noise_amplitude = 0.2;
+
 // SDF_sphere
 // ----------
 // Describe sphere in terms of SDF
 // Inside of sphere is negative, outside is positive
 // Assume sphere is centered at origin
 
-const float sphere_radius = 1.2;
-
-float SDF_sphere(const Vec3f &p) {
+float SDF_sphere(const Vec3f& p) {
   return p.norm() - sphere_radius;
+}
+
+// SDF_hedgehog
+// ------------
+// Generates spikes using interweaving sine functions
+
+float SDF_hedgehog(const Vec3f& p) {
+  Vec3f s = Vec3f(p).normalize(sphere_radius);
+  float delta = sin(16 * s.x) * sin(16 * s.y) * sin(16 * s.z);
+  return p.norm() - (sphere_radius + delta * noise_amplitude);
 }
 
 // SDF_normal
@@ -28,7 +42,7 @@ float SDF_sphere(const Vec3f &p) {
 // See Jamie Wong: Surface Normals and Lighting
 // Use gradient to find normal vector to SDF
 
-Vec3f SDF_normal(const Vec3f &pos, float (*SDF)(const Vec3f&)) {
+Vec3f SDF_normal(const Vec3f& pos, float (*SDF)(const Vec3f&)) {
   const float eps = 0.1;
   float d = SDF(pos);
   float normal_x = SDF(pos + Vec3f(eps, 0, 0)) - d;
@@ -40,6 +54,9 @@ Vec3f SDF_normal(const Vec3f &pos, float (*SDF)(const Vec3f&)) {
 // calculate_intensity
 // -------------------
 // Simple BRDF dependant only on distance from normal
+// Usage example:
+// > float light_intensity = calculate_intensity(light_pos, collision_pos, SDF);
+// > pixels[c + r * screen_width] = Vec3f(1, 1, 1) * light_intensity;
 
 float calculate_intensity(const Vec3f& light_pos, const Vec3f& collision_pos, float (*SDF)(const Vec3f&)) {
   Vec3f light_dir = (light_pos - collision_pos).normalize();
@@ -75,7 +92,7 @@ Vec3f phong_reflection(const Vec3f& diffuse_color,
 // TODO: implement += in geometry.h
 // Given a ray, performs march operation by iteratively get closer to surface
 
-bool march_ray(const Vec3f &origin, const Vec3f &direction, float (*SDF)(const Vec3f&), Vec3f &position) {
+bool march_ray(const Vec3f& origin, const Vec3f& direction, float (*SDF)(const Vec3f&), Vec3f& position) {
   position = origin;
   for (size_t i = 0; i < 128; i++) {
     float d = SDF(position);
@@ -101,6 +118,21 @@ Vec3f get_direction(const size_t row, const size_t col, const float fov, int hei
   return Vec3f(dir_x, dir_y, dir_z).normalize();
 }
 
+// generate_image
+// --------------
+// Writes to PPM file in binary and saves to path
+
+void generate_image(string path, vector<Vec3f>& pixels, int width, int height) {
+  ofstream ofs("./image.ppm", ios::binary);
+  ofs << "P6\n" << width << " " << height << "\n255\n";
+  for (size_t pixel = 0; pixel < height * width; pixel++) {
+    for (size_t channel = 0; channel < 3; channel++) {
+      ofs << (char) clamp((int) (255 * pixels[pixel][channel]), 0, 255);
+    }
+  }
+  ofs.close();
+}
+
 // main
 // ----
 // Loops over pixel values, constructs ray and marches
@@ -113,7 +145,8 @@ int main() {
   const float  fov            = M_PI/3;
   const Vec3f  camera_pos     = Vec3f(0,  0,  3);
   const Vec3f  light_pos      = Vec3f(10, 10, 10);
-  float (*SDF) (const Vec3f&) = SDF_sphere;
+  float (*SDF) (const Vec3f&) = SDF_hedgehog;
+  const Vec3f  diffuse_color  = Vec3f(0.7, 0.2, 0.9);
 
   vector<Vec3f> pixels(screen_width * screen_height);
 
@@ -122,28 +155,14 @@ int main() {
     for (size_t c = 0; c < screen_width; c++) {
       Vec3f direction = get_direction(r, c, fov, screen_height, screen_width);
       Vec3f collision_pos;
-      bool hit = march_ray(camera_pos, direction, SDF, collision_pos);
-      if (hit) {
-        /* float light_intensity = calculate_intensity(light_pos, collision_pos, SDF); */
-        /* pixels[c + r * screen_width] = Vec3f(1, 1, 1) * light_intensity; */
-        Vec3f diffuse_color = Vec3f(0.7, 0.2, 0.9);
-        pixels[c + r * screen_width] = phong_reflection(diffuse_color, light_pos, collision_pos, camera_pos, SDF);
+      if (march_ray(camera_pos, direction, SDF, collision_pos)) {
+        Vec3f illuminated_color = phong_reflection(diffuse_color, light_pos, collision_pos, camera_pos, SDF);
+        pixels[c + r * screen_width] = illuminated_color;
       } else {
         pixels[c + r * screen_width] = Vec3f(0.2, 0.7, 0.8);
       }
     }
   }
-
-  ofstream ofs("./image.ppm", ios::binary);
-  ofs << "P6\n" << screen_width << " " << screen_height << "\n255\n";
-
-  for (size_t pixel = 0; pixel < screen_height * screen_width; pixel++) {
-    for (size_t channel = 0; channel < 3; channel++) {
-      ofs << (char) clamp((int) (255 * pixels[pixel][channel]), 0, 255);
-    }
-  }
-
-  ofs.close();
-
+  generate_image("./image.ppm", pixels, screen_width, screen_height);
   return 0;
 }

@@ -1,6 +1,12 @@
 ## Bare-bones Ray Marching of Shaded Fractal Surfaces
 ##### CS 248 Final Project by Cristobal Sciutto (SUNETID: csciutto)
 
+### Implemented Features
+- Sphere SDF
+- Greedy Ray-marching Algorithm: step until SDF is negative
+- Normal-based Light Intensity
+- Phong Reflectance
+
 ### Motivation
 - Coding graphics code from scratch, without the abstractions of OpenGL APIs
 - Mathematical nature of signed distance functions (SDFs)
