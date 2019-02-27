@@ -33,10 +33,17 @@ float SDF_sphere(const Vec3f &p) {
 
 // march_ray
 // ---------
+// TODO: implement += in geometry.h
 // Given a ray, performs march operation by iteratively get closer to surface
 
-bool march_ray(Vec3f origin, Vec3f direction, float (*SDF)(const Vec3f&)) {
-  return true;
+bool march_ray(const Vec3f &origin, const Vec3f &direction, float (*SDF)(const Vec3f&)) {
+  Vec3f position = origin;
+  for (size_t i = 0; i < 128; i++) {
+    float d = SDF(position);
+    if (d < 0) return true;
+    position = position + direction * max(d * 0.1f, 0.01f);
+  }
+  return false;
 }
 
 // get_direction
@@ -47,12 +54,12 @@ bool march_ray(Vec3f origin, Vec3f direction, float (*SDF)(const Vec3f&)) {
 // Y multiplied by -1 so zero is at bottom
 // Z positioned to conform with FOV constraint
 
-Vec3f get_direction(const size_t row, const size_t col, const float fov, int width, int height) {
-  float dir_x = (row + 0.5) - width / 2.0;
-  float dir_y = -1.0 * (col + 0.5) + height / 2.0;
+Vec3f get_direction(const size_t row, const size_t col, const float fov, int height, int width) {
+  float dir_x = (col + 0.5) - width / 2.0;
+  float dir_y = -1.0 * (row + 0.5) + height / 2.0;
   float dir_z = -1.0 * height / (2.0 * tan(fov/2.0));
 
-  return Vec3f(dir_x, dir_y, dir_x).normalize();
+  return Vec3f(dir_x, dir_y, dir_z).normalize();
 }
 
 // main
@@ -72,13 +79,9 @@ int main() {
 #pragma omp parallel for
   for (size_t r = 0; r < screen_height; r++) {
     for (size_t c = 0; c < screen_width; c++) {
-      Vec3f direction = get_direction(r, c, fov, screen_width, screen_height);
-
-      if (march_ray(camera_pos, direction, SDF_sphere)) {
-        pixels[c + r * screen_width] = Vec3f(1, 1, 1);
-      } else {
-        pixels[c + r * screen_width] = Vec3f(0, 0, 0);
-      }
+      Vec3f direction = get_direction(r, c, fov, screen_height, screen_width);
+      pixels[c + r * screen_width] =
+        march_ray(camera_pos, direction, SDF_sphere) ? Vec3f(1, 1, 1) : Vec3f(0.2, 0.7, 0.8);
     }
   }
 

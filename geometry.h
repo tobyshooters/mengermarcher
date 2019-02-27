@@ -6,8 +6,9 @@
 #include <cmath>
 #include <cassert>
 
-// Generic Vector Struct Type
-template <size_t DIM, typename T> struct vec {
+// Generic Vector Struct Type backed by Array
+template <size_t DIM, typename T>
+struct vec {
     vec() { for (size_t i=DIM; i--; data_[i] = T()); }
           T& operator[](const size_t i)       { assert(i<DIM); return data_[i]; }
     const T& operator[](const size_t i) const { assert(i<DIM); return data_[i]; }
@@ -16,7 +17,8 @@ private:
 };
 
 // Vec3 Implementation done with explicit member variables for components
-template <typename T> struct vec<3,T> {
+template <typename T>
+struct vec<3,T> {
     vec() : x(T()), y(T()), z(T()) {}
     vec(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
           T& operator[](const size_t i)       { assert(i<3); return i<=0 ? x : (1==i ? y : z); }
@@ -27,33 +29,38 @@ template <typename T> struct vec<3,T> {
 };
 
 // Element-wise Multiplication Operator
-template<size_t DIM, typename T> T operator*(const vec<DIM,T>& lhs, const vec<DIM,T>& rhs) {
+template<size_t DIM, typename T>
+T operator*(const vec<DIM,T>& lhs, const vec<DIM,T>& rhs) {
     T ret = T();
     for (size_t i=DIM; i--; ret+=lhs[i]*rhs[i]);
     return ret;
 }
 
 // Element-wise Addition Operator
-template<size_t DIM, typename T> vec<DIM,T> operator+(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
+template<size_t DIM, typename T>
+vec<DIM,T> operator+(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
     for (size_t i=DIM; i--; lhs[i]+=rhs[i]);
     return lhs;
 }
 
 // Element-wise Subtraction Operator
-template<size_t DIM, typename T> vec<DIM,T> operator-(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
+template<size_t DIM, typename T>
+vec<DIM,T> operator-(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
     for (size_t i=DIM; i--; lhs[i]-=rhs[i]);
     return lhs;
 }
 
 // Scalar Multiplication Operator
-template<size_t DIM, typename T, typename U> vec<DIM,T> operator*(const vec<DIM,T> &lhs, const U& rhs) {
+template<size_t DIM, typename T, typename U>
+vec<DIM,T> operator*(const vec<DIM,T> &lhs, const U& rhs) {
     vec<DIM,T> ret;
     for (size_t i=DIM; i--; ret[i]=lhs[i]*rhs);
     return ret;
 }
 
 // Inverse Operator
-template<size_t DIM,typename T> vec<DIM,T> operator-(const vec<DIM,T> &lhs) {
+template<size_t DIM,typename T>
+vec<DIM,T> operator-(const vec<DIM,T> &lhs) {
     return lhs*T(-1);
 }
 
