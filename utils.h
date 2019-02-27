@@ -1,8 +1,8 @@
 // Original implementation by github.com/ssloy/tinykaboom
 // Expanded by Cristobal Sciutto
 
-#ifndef __GEOMETRY_H__
-#define __GEOMETRY_H__
+#ifndef __UTILS_H__
+#define __UTILS_H__
 #include <cmath>
 #include <cassert>
 
@@ -67,4 +67,15 @@ vec<DIM,T> operator-(const vec<DIM,T> &lhs) {
 // Basic Vector typedef with Floats
 typedef vec<3, float> Vec3f;
 
-#endif //__GEOMETRY_H__
+// Helper Functions
+
+template<class T>
+T clamp(const T& v, const T& lo, const T& hi) {
+  return std::max(lo, std::min(hi, v));
+}
+
+inline float dot(const Vec3f &u, const Vec3f &v) {
+  return u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+}
+
+#endif //__UTILS_H__

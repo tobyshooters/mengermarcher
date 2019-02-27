@@ -5,19 +5,11 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <vector>
-#include "geometry.h"
+#include "utils.h"
 #include <iostream>
 #include <fstream>
 
 using namespace std;
-
-// Helper Functions
-// ----------------
-
-template<class T>
-T clamp(const T& v, const T& lo, const T& hi) {
-  return max(lo, min(hi, v));
-}
 
 // SDF_sphere
 // ----------
@@ -25,10 +17,57 @@ T clamp(const T& v, const T& lo, const T& hi) {
 // Inside of sphere is negative, outside is positive
 // Assume sphere is centered at origin
 
-const float sphere_radius = 1.5;
+const float sphere_radius = 1.2;
 
 float SDF_sphere(const Vec3f &p) {
   return p.norm() - sphere_radius;
+}
+
+// SDF_normal
+// ----------
+// See Jamie Wong: Surface Normals and Lighting
+// Use gradient to find normal vector to SDF
+
+Vec3f SDF_normal(const Vec3f &pos, float (*SDF)(const Vec3f&)) {
+  const float eps = 0.1;
+  float d = SDF(pos);
+  float normal_x = SDF(pos + Vec3f(eps, 0, 0)) - d;
+  float normal_y = SDF(pos + Vec3f(0, eps, 0)) - d;
+  float normal_z = SDF(pos + Vec3f(0, 0, eps)) - d;
+  return Vec3f(normal_x, normal_y, normal_z).normalize();
+}
+
+// calculate_intensity
+// -------------------
+// Simple BRDF dependant only on distance from normal
+
+float calculate_intensity(const Vec3f& light_pos, const Vec3f& collision_pos, float (*SDF)(const Vec3f&)) {
+  Vec3f light_dir = (light_pos - collision_pos).normalize();
+  return max(0.4f, light_dir * SDF_normal(collision_pos, SDF));
+}
+
+// phong_reflectance
+// -----------------
+// Implementation of phong reflectance, per Wiki
+
+Vec3f phong_reflection(const Vec3f& diffuse_color,
+                       const Vec3f& light_pos,
+                       const Vec3f& collision_pos,
+                       const Vec3f& camera_pos,
+                       float (*SDF)(const Vec3f&))
+{
+  Vec3f specular_color = Vec3f(1.0, 1.0, 1.0);
+  float specular_exponent = 50;
+
+  Vec3f L = (light_pos - collision_pos).normalize();
+  Vec3f N = SDF_normal(collision_pos, SDF);
+  Vec3f R = (N * dot(L, N) * 2.0) - L;
+  Vec3f V = (camera_pos - collision_pos).normalize();
+
+  Vec3f ambient = diffuse_color * 0.1;
+  Vec3f diffuse = diffuse_color * dot(L, N);
+  Vec3f specular = specular_color * pow(dot(R, V), specular_exponent);
+  return ambient + diffuse + specular;
 }
 
 // march_ray
@@ -36,8 +75,8 @@ float SDF_sphere(const Vec3f &p) {
 // TODO: implement += in geometry.h
 // Given a ray, performs march operation by iteratively get closer to surface
 
-bool march_ray(const Vec3f &origin, const Vec3f &direction, float (*SDF)(const Vec3f&)) {
-  Vec3f position = origin;
+bool march_ray(const Vec3f &origin, const Vec3f &direction, float (*SDF)(const Vec3f&), Vec3f &position) {
+  position = origin;
   for (size_t i = 0; i < 128; i++) {
     float d = SDF(position);
     if (d < 0) return true;
@@ -69,10 +108,12 @@ Vec3f get_direction(const size_t row, const size_t col, const float fov, int hei
 // Parallelize ray marching with OpenMP directives
 
 int main() {
-  const int   screen_width  = 640;
-  const int   screen_height = 480;
-  const float fov           = M_PI/3;
-  const Vec3f camera_pos    = Vec3f(0, 0, 3);
+  const int    screen_width   = 640;
+  const int    screen_height  = 480;
+  const float  fov            = M_PI/3;
+  const Vec3f  camera_pos     = Vec3f(0,  0,  3);
+  const Vec3f  light_pos      = Vec3f(10, 10, 10);
+  float (*SDF) (const Vec3f&) = SDF_sphere;
 
   vector<Vec3f> pixels(screen_width * screen_height);
 
@@ -80,8 +121,16 @@ int main() {
   for (size_t r = 0; r < screen_height; r++) {
     for (size_t c = 0; c < screen_width; c++) {
       Vec3f direction = get_direction(r, c, fov, screen_height, screen_width);
-      pixels[c + r * screen_width] =
-        march_ray(camera_pos, direction, SDF_sphere) ? Vec3f(1, 1, 1) : Vec3f(0.2, 0.7, 0.8);
+      Vec3f collision_pos;
+      bool hit = march_ray(camera_pos, direction, SDF, collision_pos);
+      if (hit) {
+        /* float light_intensity = calculate_intensity(light_pos, collision_pos, SDF); */
+        /* pixels[c + r * screen_width] = Vec3f(1, 1, 1) * light_intensity; */
+        Vec3f diffuse_color = Vec3f(0.7, 0.2, 0.9);
+        pixels[c + r * screen_width] = phong_reflection(diffuse_color, light_pos, collision_pos, camera_pos, SDF);
+      } else {
+        pixels[c + r * screen_width] = Vec3f(0.2, 0.7, 0.8);
+      }
     }
   }
 
