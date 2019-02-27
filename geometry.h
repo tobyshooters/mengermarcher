@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cassert>
 
+// Generic Vector Struct Type
 template <size_t DIM, typename T> struct vec {
     vec() { for (size_t i=DIM; i--; data_[i] = T()); }
           T& operator[](const size_t i)       { assert(i<DIM); return data_[i]; }
@@ -14,6 +15,7 @@ private:
     T data_[DIM];
 };
 
+// Vec3 Implementation done with explicit member variables for components
 template <typename T> struct vec<3,T> {
     vec() : x(T()), y(T()), z(T()) {}
     vec(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
@@ -24,32 +26,38 @@ template <typename T> struct vec<3,T> {
     T x,y,z;
 };
 
-template<size_t DIM,typename T> T operator*(const vec<DIM,T>& lhs, const vec<DIM,T>& rhs) {
+// Element-wise Multiplication Operator
+template<size_t DIM, typename T> T operator*(const vec<DIM,T>& lhs, const vec<DIM,T>& rhs) {
     T ret = T();
     for (size_t i=DIM; i--; ret+=lhs[i]*rhs[i]);
     return ret;
 }
 
-template<size_t DIM,typename T>vec<DIM,T> operator+(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
+// Element-wise Addition Operator
+template<size_t DIM, typename T> vec<DIM,T> operator+(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
     for (size_t i=DIM; i--; lhs[i]+=rhs[i]);
     return lhs;
 }
 
-template<size_t DIM,typename T>vec<DIM,T> operator-(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
+// Element-wise Subtraction Operator
+template<size_t DIM, typename T> vec<DIM,T> operator-(vec<DIM,T> lhs, const vec<DIM,T>& rhs) {
     for (size_t i=DIM; i--; lhs[i]-=rhs[i]);
     return lhs;
 }
 
-template<size_t DIM,typename T,typename U> vec<DIM,T> operator*(const vec<DIM,T> &lhs, const U& rhs) {
+// Scalar Multiplication Operator
+template<size_t DIM, typename T, typename U> vec<DIM,T> operator*(const vec<DIM,T> &lhs, const U& rhs) {
     vec<DIM,T> ret;
     for (size_t i=DIM; i--; ret[i]=lhs[i]*rhs);
     return ret;
 }
 
+// Inverse Operator
 template<size_t DIM,typename T> vec<DIM,T> operator-(const vec<DIM,T> &lhs) {
     return lhs*T(-1);
 }
 
+// Basic Vector typedef with Floats
 typedef vec<3, float> Vec3f;
 
 #endif //__GEOMETRY_H__
