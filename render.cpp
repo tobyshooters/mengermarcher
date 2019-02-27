@@ -6,8 +6,18 @@
 #include <cmath>
 #include <vector>
 #include "geometry.h"
+#include <iostream>
+#include <fstream>
 
 using namespace std;
+
+// Helper Functions
+// ----------------
+
+template<class T>
+T clamp(const T& v, const T& lo, const T& hi) {
+  return max(lo, min(hi, v));
+}
 
 // SDF_sphere
 // ----------
@@ -21,13 +31,17 @@ float SDF_sphere(const Vec3f &p) {
   return p.norm() - sphere_radius;
 }
 
+// march_ray
+// ---------
+// Given a ray, performs march operation by iteratively get closer to surface
+
 bool march_ray(Vec3f origin, Vec3f direction, float (*SDF)(const Vec3f&)) {
   return true;
 }
 
 // get_direction
-// ----------
-// Given pixel (row, col) returns direction of ray
+// -------------
+// Returns direction of ray from camera to pixel (row, col)
 // Camera centered in XY-plane, with FOV angle as parameter
 // X, Y values are centered at 0.5 offsets of pixel index
 // Y multiplied by -1 so zero is at bottom
@@ -41,6 +55,12 @@ Vec3f get_direction(const size_t row, const size_t col, const float fov, int wid
   return Vec3f(dir_x, dir_y, dir_x).normalize();
 }
 
+// main
+// ----
+// Loops over pixel values, constructs ray and marches
+// Outputs to Portable Pixel Map format
+// Parallelize ray marching with OpenMP directives
+
 int main() {
   const int   screen_width  = 640;
   const int   screen_height = 480;
@@ -49,12 +69,29 @@ int main() {
 
   vector<Vec3f> pixels(screen_width * screen_height);
 
+#pragma omp parallel for
   for (size_t r = 0; r < screen_height; r++) {
-    for (size_t c = 0; c < screen_height; c++) {
+    for (size_t c = 0; c < screen_width; c++) {
       Vec3f direction = get_direction(r, c, fov, screen_width, screen_height);
-      march_ray(camera_pos, direction, SDF_sphere);
+
+      if (march_ray(camera_pos, direction, SDF_sphere)) {
+        pixels[c + r * screen_width] = Vec3f(1, 1, 1);
+      } else {
+        pixels[c + r * screen_width] = Vec3f(0, 0, 0);
+      }
     }
   }
+
+  ofstream ofs("./image.ppm", ios::binary);
+  ofs << "P6\n" << screen_width << " " << screen_height << "\n255\n";
+
+  for (size_t pixel = 0; pixel < screen_height * screen_width; pixel++) {
+    for (size_t channel = 0; channel < 3; channel++) {
+      ofs << (char) clamp((int) (255 * pixels[pixel][channel]), 0, 255);
+    }
+  }
+
+  ofs.close();
 
   return 0;
 }
