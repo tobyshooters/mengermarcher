@@ -5,37 +5,14 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <vector>
-#include "utils.h"
 #include <iostream>
 #include <fstream>
 
+// src files
+#include "utils.h"
+#include "sdf.h"
+
 using namespace std;
-
-// SDF Constants
-// -------------
-
-const double sphere_radius = 1.2;
-const double noise_amplitude = 0.2;
-
-// SDF_sphere
-// ----------
-// Describe sphere in terms of SDF
-// Inside of sphere is negative, outside is positive
-// Assume sphere is centered at origin
-
-double SDF_sphere(const Vec3& p) {
-  return p.norm() - sphere_radius;
-}
-
-// SDF_hedgehog
-// ------------
-// Generates spikes using interweaving sine functions
-
-double SDF_hedgehog(const Vec3& p) {
-  Vec3 s = Vec3(p).normalize(sphere_radius);
-  double delta = sin(16 * s.x) * sin(16 * s.y) * sin(16 * s.z);
-  return p.norm() - (sphere_radius + delta * noise_amplitude);
-}
 
 // SDF_normal
 // ----------
@@ -145,7 +122,7 @@ int main() {
   const double  fov           = M_PI/3;
   const Vec3    camera_pos    = Vec3(0,  0,  3);
   const Vec3    light_pos     = Vec3(10, 10, 10);
-  double (*SDF) (const Vec3&) = SDF_hedgehog;
+  double (*SDF) (const Vec3&) = SDF_cube;
   const Vec3    diffuse_color = Vec3(0.7, 0.2, 0.9);
 
   vector<Vec3> pixels(screen_width * screen_height);
