@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "Vec3.h"
 #include "sdf.h"
 #include <cmath>
 
@@ -33,7 +33,11 @@ double SDF_sphere(const Vec3& p) {
 }
 
 double SDF_cube(const Vec3& p) {
-  return vmax(abs(p) - Vec3(0.5, 1, 1));
+  return vmax(abs(p) - Vec3(1, 1, 1));
+}
+
+double SDF_plane(const Vec3& p, const Vec3& c, const Vec3& n) {
+  return dot(p - c, n);
 }
 
 // SDF Complex Functions
@@ -43,4 +47,11 @@ double SDF_hedgehog(const Vec3& p) {
   Vec3 s = Vec3(p).normalize(sphere_radius);
   double delta = sin(16 * s.x) * sin(16 * s.y) * sin(16 * s.z);
   return p.norm() - (sphere_radius + delta * noise_amplitude);
+}
+
+// SDF used when rendering
+// -----------------------
+
+double SDF_scene(const Vec3& p) {
+  return SDF_hedgehog(p);
 }

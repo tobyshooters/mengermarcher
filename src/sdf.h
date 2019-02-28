@@ -1,6 +1,6 @@
 #ifndef __SDF_H__
 #define __SDF_H__
-#include "utils.h"
+#include "Vec3.h"
 
 // SDF Composition
 // ---------------
@@ -23,5 +23,11 @@ double SDF_cube(const Vec3& p);
 // Generates spikes using interweaving sine functions
 
 double SDF_hedgehog(const Vec3& p);
+
+// SDF_scene
+// ------------
+// SDF used by render.cpp to generate scene
+
+double SDF_scene(const Vec3& p);
 
 #endif //__SDF_H__

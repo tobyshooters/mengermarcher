@@ -9,10 +9,28 @@
 #include <fstream>
 
 // src files
-#include "utils.h"
 #include "sdf.h"
+#include "Vec3.h"
+#include "Mat3.h"
+#include "utils.h"
 
 using namespace std;
+
+// generate_image
+// --------------
+// Writes to PPM file in binary and saves to path
+
+void generate_image(string path, vector<Vec3>& pixels, int width, int height) {
+  ofstream ofs("./image.ppm", ios::binary);
+  ofs << "P6\n" << width << " " << height << "\n255\n";
+  for (size_t pixel = 0; pixel < height * width; pixel++) {
+    for (size_t channel = 0; channel < 3; channel++) {
+      ofs << (char) clamp((int) (255 * pixels[pixel][channel]), 0, 255);
+    }
+  }
+  ofs.close();
+}
+
 
 // SDF_normal
 // ----------
@@ -87,7 +105,12 @@ bool march_ray(const Vec3& origin, const Vec3& direction, double (*SDF)(const Ve
 // Y multiplied by -1 so zero is at bottom
 // Z positioned to conform with FOV constraint
 
-Vec3 get_direction(const size_t row, const size_t col, const double fov, int height, int width) {
+Vec3 get_direction(const size_t row, 
+                   const size_t col,
+                   const int height, 
+                   const int width, 
+                   const double fov)
+{
   double dir_x = (col + 0.5) - width / 2.0;
   double dir_y = -1.0 * (row + 0.5) + height / 2.0;
   double dir_z = -1.0 * height / (2.0 * tan(fov/2.0));
@@ -95,19 +118,14 @@ Vec3 get_direction(const size_t row, const size_t col, const double fov, int hei
   return Vec3(dir_x, dir_y, dir_z).normalize();
 }
 
-// generate_image
-// --------------
-// Writes to PPM file in binary and saves to path
+// camera_matrix
+// -------------
+// returns matrix which redirects ray to same direction as camera
 
-void generate_image(string path, vector<Vec3>& pixels, int width, int height) {
-  ofstream ofs("./image.ppm", ios::binary);
-  ofs << "P6\n" << width << " " << height << "\n255\n";
-  for (size_t pixel = 0; pixel < height * width; pixel++) {
-    for (size_t channel = 0; channel < 3; channel++) {
-      ofs << (char) clamp((int) (255 * pixels[pixel][channel]), 0, 255);
-    }
-  }
-  ofs.close();
+const Mat3 camera_matrix(const Vec3& camera_dir) {
+  double c = dot(camera_dir, Vec3(0, 0, -1));
+  double s = sqrt(1 - c * c);
+  return Mat3(Vec3(c, 0, -s), Vec3(0, 1, 0), Vec3(s, 0, c));
 }
 
 // main
@@ -119,20 +137,27 @@ void generate_image(string path, vector<Vec3>& pixels, int width, int height) {
 int main() {
   const int     screen_width  = 640;
   const int     screen_height = 480;
-  const double  fov           = M_PI/3;
-  const Vec3    camera_pos    = Vec3(0,  0,  3);
+
   const Vec3    light_pos     = Vec3(10, 10, 10);
-  double (*SDF) (const Vec3&) = SDF_cube;
   const Vec3    diffuse_color = Vec3(0.7, 0.2, 0.9);
+  double (*SDF) (const Vec3&) = SDF_scene;
+
+  const Vec3    camera_pos    = Vec3(3, 0, 3);
+  const Vec3    camera_dir    = Vec3(-1, 0, -1).normalize();
+  const Mat3    camera_mat    = camera_matrix(camera_dir);
+  const double  fov           = M_PI/3;
 
   vector<Vec3> pixels(screen_width * screen_height);
 
 #pragma omp parallel for
   for (size_t r = 0; r < screen_height; r++) {
     for (size_t c = 0; c < screen_width; c++) {
-      Vec3 direction = get_direction(r, c, fov, screen_height, screen_width);
+
+      Vec3 ideal_dir = get_direction(r, c, screen_height, screen_width, fov);
+      Vec3 ray_dir = camera_mat * ideal_dir;
+
       Vec3 collision_pos;
-      if (march_ray(camera_pos, direction, SDF, collision_pos)) {
+      if (march_ray(camera_pos, ray_dir, SDF, collision_pos)) {
         Vec3 illuminated_color = phong_reflection(diffuse_color, light_pos, collision_pos, camera_pos, SDF);
         pixels[c + r * screen_width] = illuminated_color;
       } else {
@@ -140,6 +165,9 @@ int main() {
       }
     }
   }
+
   generate_image("./image.ppm", pixels, screen_width, screen_height);
+  system("open image.ppm");
+
   return 0;
 }
