@@ -1,7 +1,9 @@
 ## Bare-bones Ray Marching of Shaded Fractal Surfaces
 ##### CS 248 Final Project by Cristobal Sciutto (SUNETID: csciutto)
 
-`g++ render.cpp -o render && ./render && open image.ppm`
+`make && ./render && open image.ppm`
+
+Dependencies: `ImageMagick`
 
 ### Implemented Features
 - Sphere SDF

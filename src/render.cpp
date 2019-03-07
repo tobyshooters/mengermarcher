@@ -21,7 +21,7 @@ using namespace std;
 // Writes to PPM file in binary and saves to path
 
 void generate_image(string path, vector<Vec3>& pixels, int width, int height) {
-  ofstream ofs("./image.ppm", ios::binary);
+  ofstream ofs(path, ios::binary);
   ofs << "P6\n" << width << " " << height << "\n255\n";
   for (size_t pixel = 0; pixel < height * width; pixel++) {
     for (size_t channel = 0; channel < 3; channel++) {
@@ -84,7 +84,6 @@ Vec3 phong_reflection(const Vec3& diffuse_color,
 
 // march_ray
 // ---------
-// TODO: implement += in geometry.h
 // Given a ray, performs march operation by iteratively get closer to surface
 
 bool march_ray(const Vec3& origin, const Vec3& direction, double (*SDF)(const Vec3&), Vec3& position) {
@@ -100,10 +99,10 @@ bool march_ray(const Vec3& origin, const Vec3& direction, double (*SDF)(const Ve
 // get_direction
 // -------------
 // Returns direction of ray from camera to pixel (row, col)
-// Camera centered in XY-plane, with FOV angle as parameter
+// Assumes camera in -z direction, located at origin
+// Z-position of picture plane is determined by FOV parameter
 // X, Y values are centered at 0.5 offsets of pixel index
 // Y multiplied by -1 so zero is at bottom
-// Z positioned to conform with FOV constraint
 
 Vec3 get_direction(const size_t row, 
                    const size_t col,
@@ -121,20 +120,26 @@ Vec3 get_direction(const size_t row,
 // camera_matrix
 // -------------
 // returns matrix which redirects ray to same direction as camera
+// only does rotation on XZ-plane so far
+// TODO: implement rotation on YZ-plane and compose
 
 const Mat3 camera_matrix(const Vec3& camera_dir) {
-  double c = dot(camera_dir, Vec3(0, 0, -1));
-  double s = sqrt(1 - c * c);
-  return Mat3(Vec3(c, 0, -s), Vec3(0, 1, 0), Vec3(s, 0, c));
+  Vec3 y = dot(camera_dir, Vec3(0, 1, 0)) * Vec3(0, 1, 0);
+  Vec3 xz = (camera_dir - y).normalize();
+  double p_c = dot(xz, Vec3(0, 0, -1));
+  double p_s = sqrt(1 - p_c * p_c);
+  if (xz[0] > 0) p_s = -p_s; // get angle in anti-clockwise direction
+  return Mat3(Vec3(p_c, 0, -p_s), Vec3(0, 1, 0), Vec3(p_s, 0, p_c));
 }
 
-// main
-// ----
+// render
+// ------
+// One rendering, for a given object
 // Loops over pixel values, constructs ray and marches
 // Outputs to Portable Pixel Map format
 // Parallelize ray marching with OpenMP directives
 
-int main() {
+void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
   const int     screen_width  = 640;
   const int     screen_height = 480;
 
@@ -142,32 +147,55 @@ int main() {
   const Vec3    diffuse_color = Vec3(0.7, 0.2, 0.9);
   double (*SDF) (const Vec3&) = SDF_scene;
 
-  const Vec3    camera_pos    = Vec3(3, 0, 3);
-  const Vec3    camera_dir    = Vec3(-1, 0, -1).normalize();
-  const Mat3    camera_mat    = camera_matrix(camera_dir);
+  const Mat3    orient_ray    = camera_matrix(camera_dir);
   const double  fov           = M_PI/3;
 
   vector<Vec3> pixels(screen_width * screen_height);
 
+// TODO: TALK TO KAYVON ABOUT OpenMP
 #pragma omp parallel for
   for (size_t r = 0; r < screen_height; r++) {
     for (size_t c = 0; c < screen_width; c++) {
 
-      Vec3 ideal_dir = get_direction(r, c, screen_height, screen_width, fov);
-      Vec3 ray_dir = camera_mat * ideal_dir;
+      /* cout << omp_get_thread_num() << endl; */
 
+      Vec3 ray_dir = orient_ray * get_direction(r, c, screen_height, screen_width, fov);
       Vec3 collision_pos;
       if (march_ray(camera_pos, ray_dir, SDF, collision_pos)) {
-        Vec3 illuminated_color = phong_reflection(diffuse_color, light_pos, collision_pos, camera_pos, SDF);
-        pixels[c + r * screen_width] = illuminated_color;
+        pixels[c + r * screen_width] = phong_reflection(diffuse_color, light_pos, collision_pos, camera_pos, SDF);
       } else {
         pixels[c + r * screen_width] = Vec3(0.0, 0.0, 0.0);
       }
     }
   }
 
-  generate_image("./image.ppm", pixels, screen_width, screen_height);
-  system("open image.ppm");
+  string path = "./image" + frame_id + ".ppm";
+  generate_image(path, pixels, screen_width, screen_height);
+}
 
+// main
+// ----
+// Generates renderings for animation
+// Uses ImageMagick to generate GIFs
+
+int main() {
+
+  cout << "Generating scene..." << endl;
+  for (int n_frame = 0; n_frame <= 20; n_frame++) {
+
+    string frame_id = padded_id(n_frame, /* width = */ 3);
+    cout << "...rendering frame " << frame_id << endl;
+
+    float c = cos(M_PI * n_frame / 10);
+    float s = sin(M_PI * n_frame / 10);
+
+    Vec3 camera_pos =  3.0 * Vec3(s, 0, c);
+    Vec3 camera_dir = -1.0 * Vec3(s, 0, c).normalize();
+
+    render(frame_id, camera_pos, camera_dir);
+  }
+  cout << "Done!" << endl;
+
+  system("convert -delay 10 -loop 0 image*.ppm scene.gif && rm -rf *.ppm");
   return 0;
 }

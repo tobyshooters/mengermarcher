@@ -18,6 +18,10 @@ class Mat3 {
       return v[0] * entries[0] + v[1] * entries[1] + v[2] * entries[2];
     }
 
+    Mat3 operator*(const Mat3& m) const {
+      return Mat3((*this) * m[0], (*this) * m[1], (*this) * m[2]);
+    }
+
   private:
     Vec3 entries[3];
 
