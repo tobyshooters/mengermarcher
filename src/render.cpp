@@ -12,6 +12,7 @@
 #include "sdf.h"
 #include "Vec3.h"
 #include "Mat3.h"
+#include "threading.h"
 #include "utils.h"
 
 using namespace std;
@@ -137,9 +138,10 @@ const Mat3 camera_matrix(const Vec3& camera_dir) {
 // One rendering, for a given object
 // Loops over pixel values, constructs ray and marches
 // Outputs to Portable Pixel Map format
-// Parallelize ray marching with OpenMP directives
 
 void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
+  cout << "...rendering frame " << frame_id << endl;;
+
   const int     screen_width  = 640;
   const int     screen_height = 480;
 
@@ -152,20 +154,15 @@ void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
 
   vector<Vec3> pixels(screen_width * screen_height);
 
-// TODO: TALK TO KAYVON ABOUT OpenMP
-#pragma omp parallel for
-  for (size_t r = 0; r < screen_height; r++) {
-    for (size_t c = 0; c < screen_width; c++) {
+  for (size_t n = 0; n < screen_height * screen_width; n++) {
+    int r = n / screen_width; int c = n % screen_width;
 
-      /* cout << omp_get_thread_num() << endl; */
-
-      Vec3 ray_dir = orient_ray * get_direction(r, c, screen_height, screen_width, fov);
-      Vec3 collision_pos;
-      if (march_ray(camera_pos, ray_dir, SDF, collision_pos)) {
-        pixels[c + r * screen_width] = phong_reflection(diffuse_color, light_pos, collision_pos, camera_pos, SDF);
-      } else {
-        pixels[c + r * screen_width] = Vec3(0.0, 0.0, 0.0);
-      }
+    Vec3 ray_dir = orient_ray * get_direction(r, c, screen_height, screen_width, fov);
+    Vec3 collision_pos;
+    if (march_ray(camera_pos, ray_dir, SDF, collision_pos)) {
+      pixels[c + r * screen_width] = phong_reflection(diffuse_color, light_pos, collision_pos, camera_pos, SDF);
+    } else {
+      pixels[c + r * screen_width] = Vec3(0.0, 0.0, 0.0);
     }
   }
 
@@ -177,14 +174,15 @@ void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
 // ----
 // Generates renderings for animation
 // Uses ImageMagick to generate GIFs
+// Parallelize ray marching over frames
 
 int main() {
+  ThreadPool frame_pool(4);
 
-  cout << "Generating scene..." << endl;
+  cout << "Generating scene..." << endl;;
   for (int n_frame = 0; n_frame <= 20; n_frame++) {
 
     string frame_id = padded_id(n_frame, /* width = */ 3);
-    cout << "...rendering frame " << frame_id << endl;
 
     float c = cos(M_PI * n_frame / 10);
     float s = sin(M_PI * n_frame / 10);
@@ -192,10 +190,16 @@ int main() {
     Vec3 camera_pos =  3.0 * Vec3(s, 0, c);
     Vec3 camera_dir = -1.0 * Vec3(s, 0, c).normalize();
 
-    render(frame_id, camera_pos, camera_dir);
+    frame_pool.schedule([frame_id, camera_pos, camera_dir] { 
+      render(frame_id, camera_pos, camera_dir); 
+    });
   }
+
+  frame_pool.wait();
+
+  cout << endl << "Converting scene to gif..." << endl;
+  system("convert -delay 10 -loop 0 image*.ppm scene.gif && rm -rf *.ppm");
   cout << "Done!" << endl;
 
-  system("convert -delay 10 -loop 0 image*.ppm scene.gif && rm -rf *.ppm");
   return 0;
 }
