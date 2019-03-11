@@ -13,10 +13,14 @@ T clamp(const T& v, const T& lo, const T& hi) {
   return std::max(lo, std::min(hi, v));
 }
 
-std::string padded_id(int n, int width) {
+inline std::string padded_id(int n, int width) {
   std::ostringstream out;
   out << std::setfill('0') << std::setw(width) << n;
   return out.str();
+}
+
+inline double rmod(double x, double y) {
+  return x > 0 ? fmod(x, y) : -fmod(x, y);
 }
 
 #endif //__UTILS_H__

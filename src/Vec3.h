@@ -11,6 +11,7 @@ class Vec3 {
     double x, y, z;
 
     Vec3() : x(0.0), y(0.0), z(0.0) {}
+    Vec3(double c) : x(c), y(c), z(c) {}
     Vec3(double x, double y, double z) : x(x), y(y), z(z) {}
     Vec3(const Vec3& v) : x(v.x), y(v.y), z(v.z) {}
 

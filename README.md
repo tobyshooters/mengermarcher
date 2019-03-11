@@ -1,15 +1,28 @@
 ## Bare-bones Ray Marching of Shaded Fractal Surfaces
 ##### CS 248 Final Project by Cristobal Sciutto (SUNETID: csciutto)
 
-`make && ./render && open image.ppm`
+`make && ./render && open scene.gif`
 
 Dependencies: `ImageMagick`
 
+### TODO
+- Menger Sponge
+
+### Implemented SDFs
+- Primitives: Sphere, Cube, Plane
+- Displacement with sinusoids
+- Unions, Intersects, Differences
+- Repeated primitives with modulus
+
 ### Implemented Features
-- Sphere SDF
+- Mat3 and Vec3 implementations
 - Greedy Ray-marching Algorithm: step until SDF is negative
 - Normal-based Light Intensity
 - Phong Reflectance
+- Camera movement and animation with ImageMagick GIFs
+- ThreadPool and Semaphore implementations (based on CS110)
+- Parallel rendering of images with ThreadPool
+- Soft Shadows via Inigo Quilez
 
 ### Motivation
 - Coding graphics code from scratch, without the abstractions of OpenGL APIs

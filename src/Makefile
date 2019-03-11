@@ -8,7 +8,7 @@ $(TARGET): render.o sdf.o
 render.o: render.cpp sdf.h Vec3.h Mat3.h utils.h threading.h
 	$(CC) $(CFLAGS) render.cpp
 
-sdf.o: sdf.cpp sdf.h Vec3.h
+sdf.o: sdf.cpp sdf.h Vec3.h utils.h
 	$(CC) $(CFLAGS) sdf.cpp
 
 clean:
