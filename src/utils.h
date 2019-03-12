@@ -19,8 +19,10 @@ inline std::string padded_id(int n, int width) {
   return out.str();
 }
 
-inline double rmod(double x, double y) {
-  return x > 0 ? fmod(x, y) : -fmod(x, y);
+// Brings negative numbers into positive range
+inline double rmod(double v, double m) {
+  double mod = fmod(v, m);
+  return v > 0 ? mod : mod + m;
 }
 
 #endif //__UTILS_H__

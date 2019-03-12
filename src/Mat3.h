@@ -6,6 +6,7 @@
 class Mat3 {
   public:
     Mat3(void) {}
+    // Initialize with columns
     Mat3(Vec3 x, Vec3 y, Vec3 z) { entries[0] = x; entries[1] = y; entries[2] = z; }
 
     double& operator()(int i, int j) { return entries[j][i]; }

@@ -6,13 +6,15 @@
 Dependencies: `ImageMagick`
 
 ### TODO
-- Menger Sponge
+- Submit to cluster for efficiency
+- Rotation in 3-space
 
 ### Implemented SDFs
 - Primitives: Sphere, Cube, Plane
 - Displacement with sinusoids
 - Unions, Intersects, Differences
 - Repeated primitives with modulus
+- Menger Sponge of arbitrary dimension
 
 ### Implemented Features
 - Mat3 and Vec3 implementations
@@ -23,6 +25,9 @@ Dependencies: `ImageMagick`
 - ThreadPool and Semaphore implementations (based on CS110)
 - Parallel rendering of images with ThreadPool
 - Soft Shadows via Inigo Quilez
+- Multiple light sources
+- Light attenuation
+- Supersampling for Anti-aliasing
 
 ### Motivation
 - Coding graphics code from scratch, without the abstractions of OpenGL APIs

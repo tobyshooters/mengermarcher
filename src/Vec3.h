@@ -2,6 +2,7 @@
 #define __VEC3_H__
 #include <cmath>
 #include <algorithm>
+#include "utils.h"
 
 // Vec3 Implementation
 // -------------------
@@ -49,6 +50,10 @@ inline Vec3 abs(const Vec3& v) {
 
 inline double vmax(const Vec3& v) {
   return std::max(std::max(v.x, v.y), v.z);
+}
+
+inline Vec3 mod(const Vec3& v, const double m) {
+  return Vec3(rmod(v.x, m), rmod(v.y, m), rmod(v.z, m));
 }
 
 #endif //__VEC3_H__
