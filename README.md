@@ -3,7 +3,7 @@
 
 `make && ./render && open scene.gif`
 
-Dependencies: `ImageMagick`
+Dependencies: `ImageMagick`, for GIF generation
 
 ### TODO
 - Submit to cluster for efficiency
@@ -21,13 +21,13 @@ Dependencies: `ImageMagick`
 - Greedy Ray-marching Algorithm: step until SDF is negative
 - Normal-based Light Intensity
 - Phong Reflectance
-- Camera movement and animation with ImageMagick GIFs
 - ThreadPool and Semaphore implementations (based on CS110)
 - Parallel rendering of images with ThreadPool
 - Soft Shadows via Inigo Quilez
 - Multiple light sources
 - Light attenuation
 - Supersampling for Anti-aliasing
+- Camera movement API (translation and rotation)
 
 ### Motivation
 - Coding graphics code from scratch, without the abstractions of OpenGL APIs

@@ -91,8 +91,8 @@ Mat3 rot(
     );
 
 double SDF_scene(const Vec3& p) {
-  /* double d1 = SDF_menger(rot * p, 3); */
-  double d1 = SDF_sphere(p, 0.5);
+  double d1 = SDF_menger(p, 2);
+  /* double d1 = SDF_sphere(p, 0.5); */
   double d2 = SDF_plane(p, Vec3(0, -1.0, 0), Vec3(0, 1, 0));
   return SDF_union(d1, d2);
 }

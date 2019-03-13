@@ -12,6 +12,7 @@
 #include "sdf.h"
 #include "Vec3.h"
 #include "Mat3.h"
+#include "animate.h"
 #include "threading.h"
 #include "utils.h"
 
@@ -21,15 +22,13 @@ using namespace std;
 // ----------------
 // Note: rendering constants defined in render();
 
-const int  INIT_FRAME       = 2;
-const int  NUM_FRAMES       = 1;
 const int  NUM_THREADS      = 4;
 const int  SCREEN_WIDTH     = 640;
 const int  SCREEN_HEIGHT    = 480;
-const int  SAMPLE_RATE      = 2;
-const int  MARCH_ITERATIONS = 256;
+const int  SAMPLE_RATE      = 1;
+const int  MARCH_ITERATIONS = 1024;
 const bool SHADING          = true;
-const int  SHADE_ITERATIONS = 512;
+const int  SHADE_ITERATIONS = 1024;
 
 // generate_image
 // --------------
@@ -167,14 +166,15 @@ const Mat3 camera_matrix(const Vec3& camera_dir) {
 // render
 // ------
 // One rendering, for a given object
-// Loops over pixel values, constructs ray and marches
-// Outputs to Portable Pixel Map format
+// Loops over sample locations, constructs ray and marches
+// Supersampling enabled by changing the SAMPLE_RATE constant
+// Outputs Portable Pixel Map format and then merged to GIF
 
 void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
   cout << "...rendering frame " << frame_id << endl;;
 
   // RENDERING CONSTANTS
-  const vector<Vec3> lights        { Vec3(4, 4, -0.5) , Vec3(-2, 4, 10)  };
+  const vector<Vec3> lights        { Vec3(-2, 0, 0), Vec3(0, 0, 2) };
   const Vec3         diffuse_color = Vec3(0.7, 0.2, 0.9);
   double (*SDF)      (const Vec3&) = SDF_scene;
   const Mat3         orient_ray    = camera_matrix(camera_dir);
@@ -201,12 +201,14 @@ void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
       }
     }
 
-    double shade = 0.0;
+    double shade = 1.0;
     if (SHADING) {
-      for (Vec3 light_pos : lights)
+      for (Vec3 light_pos : lights) {
         shade += compute_shading(light_pos, collision_pos, SDF);
+      }
+      shade /= lights.size();
+      shade = 2 * shade - shade * shade; // 1 - (1 - s)^2
     }
-    shade /= lights.size();
     
     double factor = (1.0 / (SAMPLE_RATE * SAMPLE_RATE));
     pixels[(c / SAMPLE_RATE) + (r / SAMPLE_RATE) * SCREEN_WIDTH] += factor * shade * color;
@@ -223,21 +225,23 @@ void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
 // Parallelize ray marching over frames
 
 int main() {
+  cout << "Generating scene..." << endl;;
   ThreadPool frame_pool(NUM_THREADS);
 
-  cout << "Generating scene..." << endl;;
-  for (int n_frame = INIT_FRAME; n_frame < INIT_FRAME + NUM_FRAMES; n_frame++) {
+  Dolly camera_rig(Vec3(0, 0, 1.5), Vec3(0, 0, -1));
+  camera_rig.set_translate(Vec3(0, 0, 0), 5);
+  camera_rig.set_rotate(-90.0, 5);
+  camera_rig.set_translate(Vec3(-1.0, 0, 0), 5);
+
+  int num_frames = camera_rig.num_moves();
+  cout << "Number of frames: " << num_frames << endl;
+  for (int n_frame = 0; n_frame < num_frames; n_frame++) {
 
     string frame_id = padded_id(n_frame, /* width = */ 3);
+    frame_t next_frame = camera_rig.get_next_frame();
 
-    double c = cos(M_PI * n_frame / 10);
-    double s = sin(M_PI * n_frame / 10);
-
-    Vec3 camera_pos =  2.5 * Vec3(s, 0, c);
-    Vec3 camera_dir = -1.0 * Vec3(s, 0, c).normalize();
-
-    frame_pool.schedule([frame_id, camera_pos, camera_dir] { 
-      render(frame_id, camera_pos, camera_dir); 
+    frame_pool.schedule([frame_id, next_frame] { 
+      render(frame_id, next_frame.pos, next_frame.dir); 
     });
   }
 

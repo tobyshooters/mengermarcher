@@ -5,7 +5,7 @@ TARGET=render
 $(TARGET): render.o sdf.o
 	$(CC) -o $(TARGET) render.o sdf.o
 
-render.o: render.cpp sdf.h Vec3.h Mat3.h utils.h threading.h
+render.o: render.cpp sdf.h Vec3.h Mat3.h utils.h threading.h animate.h
 	$(CC) $(CFLAGS) render.cpp
 
 sdf.o: sdf.cpp sdf.h Vec3.h utils.h
