@@ -1,13 +1,6 @@
 ## Bare-bones Ray Marching of Shaded Fractal Surfaces
-##### CS 248 Final Project by Cristobal Sciutto (SUNETID: csciutto)
 
 `make && ./render && open scene.gif`
-
-Dependencies: `ImageMagick`, for GIF generation
-
-### TODO
-- Submit to cluster for efficiency
-- Rotation in 3-space
 
 ```
 .
@@ -21,6 +14,8 @@ Dependencies: `ImageMagick`, for GIF generation
     ├── Vec3.h       // vector implementation
     └── utils.h      // helper functions
 ```
+
+Dependencies: `ImageMagick`, for GIF generation
 
 ### Implemented SDFs
 - Primitives: Sphere, Cube, Plane
