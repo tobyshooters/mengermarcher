@@ -9,6 +9,19 @@ Dependencies: `ImageMagick`, for GIF generation
 - Submit to cluster for efficiency
 - Rotation in 3-space
 
+```
+.
+├── images           // rendering examples
+└── src
+    ├── render.cpp   // main ray marching
+    ├── sdf.cpp/h    // definition of signed distance functions
+    ├── animate.h    // camera animation api
+    ├── threading.h  // concurrency primitives
+    ├── Mat3.h       // matrix implementation
+    ├── Vec3.h       // vector implementation
+    └── utils.h      // helper functions
+```
+
 ### Implemented SDFs
 - Primitives: Sphere, Cube, Plane
 - Displacement with sinusoids
