@@ -50,4 +50,6 @@ Dependencies: `ImageMagick`, for GIF generation
 - Fractal SDFs: <http://blog.hvidtfeldts.net/index.php/2011/06/distance-estimated-3d-fractals-part-i/>
 - Inigo Quilez Ray Marching: <https://www.iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm>
 
+### Sample Asset
+
 ![](images/around_and_in.gif)
