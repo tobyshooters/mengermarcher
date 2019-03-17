@@ -1,6 +1,8 @@
 ## Bare-bones Ray Marching of Shaded Fractal Surfaces
 
-A project report is available in `/docs/report.pdf`, exploring some of the techniques explored in this project.
+![](images/process/final.gif)
+
+A project report is available at `/docs/report.pdf`, explaining some of the techniques explored in this project.
 
 `make && ./render && open scene.gif`
 
@@ -29,7 +31,7 @@ Dependencies: `ImageMagick`, for GIF generation
 
 ### Implemented Features
 - Mat3 and Vec3 implementations
-- Greedy Ray-marching Algorithm: step until SDF is negative
+- Ray-marching Algorithm: step until SDF is negative
 - Normal-based Light Intensity
 - Phong Reflectance
 - ThreadPool and Semaphore implementations (based on CS110)
@@ -43,13 +45,6 @@ Dependencies: `ImageMagick`, for GIF generation
 ### Motivation
 - Coding graphics code from scratch, without the abstractions of OpenGL APIs
 - Mathematical nature of signed distance functions (SDFs)
-
-### Deliverables
-- Documented ray marching source code
-- Capable of general-purpose primitive rendering
-- Soft shadows and penumbra
-- Complex fractal structure SDF demo
-- Final video exemplifying work
 
 ### Sources
 - Ray Marching and SDFs: <http://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/>
