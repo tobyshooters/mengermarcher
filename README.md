@@ -1,6 +1,6 @@
 ## Bare-bones Ray Marching of Shaded Fractal Surfaces
 
-![](images/process/final.gif)
+![](images/process/15_mega.gif)
 
 A project report is available at `/docs/report.pdf`, explaining some of the techniques explored in this project.
 
