@@ -31,7 +31,7 @@ inline double SDF_sphere(const Vec3& p, const double sphere_radius) {
 
 inline double SDF_box(const Vec3& p, const Vec3& s) {
   // s is length of cuboid in each direction
-  return vmax(abs(p) - s/2);
+  return vmax(abs(p) - s);
 }
 
 inline double SDF_plane(const Vec3& p, const Vec3& c, const Vec3& n) {
@@ -54,13 +54,26 @@ double SDF_sphere_repeated(const Vec3& p, const double sphere_radius, const doub
   return SDF_sphere(repeated - Vec3(spread / 2), sphere_radius);
 }
 
-double SDF_cross(const Vec3& p, const double scale) {
-  double epsilon = 0.01;
-  double box1 = SDF_box(p, Vec3(1.0 + epsilon, 1.0/3, 1.0/3));
-  double box2 = SDF_box(p, Vec3(1.0/3, 1.0 + epsilon, 1.0/3));
-  double box3 = SDF_box(p, Vec3(1.0/3, 1.0/3, 1.0 + epsilon));
-  double cross = SDF_union(box1, SDF_union(box2, box3));
-  return (1.0 / scale) * cross;
+double SDF_cross(const Vec3& p) {
+  double inf = 1000000.0;
+  double box1 = SDF_box(p, Vec3(inf, 1.0, 1.0));
+  double box2 = SDF_box(p, Vec3(1.0, inf, 1.0));
+  double box3 = SDF_box(p, Vec3(1.0, 1.0, inf));
+  return SDF_union(box1, SDF_union(box2, box3));
+}
+
+double SDF_wronger(const Vec3& p, double size, int iterations) {
+  double d = SDF_box(p, Vec3(size));
+  double s = 1.0;
+
+  for (int i = 0; i < iterations; i++) {
+    Vec3 a = mod(p * s, size) - (size / 2);
+    Vec3 r = Vec3(size) - 3.0 * abs(a);
+    s *= 3.0;
+    double c = SDF_cross(r) / s;
+    d = max(d, c);
+  }
+  return d;
 }
 
 double SDF_menger(const Vec3& p, int iterations) {
@@ -71,28 +84,20 @@ double SDF_menger(const Vec3& p, int iterations) {
   double s = 1.0;
 
   for (int i = 0; i < iterations; i++) {
-    Vec3 a = mod(s * p, 1.0) - Vec3(0.5);
-    Vec3 r = Vec3(0.5) - abs(a);
+    Vec3 a = mod(p * s, 2.0) - 1.0;
+    Vec3 r = Vec3(1.0) - 3.0 * abs(a);
     s *= 3.0;
-    double c = SDF_cross(r, s);
-    d = SDF_difference(d, c);
+    double c = SDF_cross(r) / s;
+    d = max(d, c);
   }
-
   return d;
 }
 
 // SDF used when rendering
 // -----------------------
 
-Mat3 rot(
-    Vec3(1, 1, 0).normalize(), 
-    Vec3(-1, 1, 0).normalize(), 
-    Vec3(0, 0, 1).normalize()
-    );
-
 double SDF_scene(const Vec3& p) {
-  double d1 = SDF_menger(p, 2);
-  /* double d1 = SDF_sphere(p, 0.5); */
-  double d2 = SDF_plane(p, Vec3(0, -1.0, 0), Vec3(0, 1, 0));
+  double d1 = SDF_menger(p, 5);
+  double d2 = SDF_plane(p, Vec3(0, -1.5, 0), Vec3(0, 1, 0));
   return SDF_union(d1, d2);
 }

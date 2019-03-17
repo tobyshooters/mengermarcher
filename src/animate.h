@@ -3,10 +3,18 @@
 
 #define _USE_MATH_DEFINES
 #include "Vec3.h"
+#include "Mat3.h"
 #include <cmath>
 #include <queue>
 
 using namespace std;
+
+Mat3 get_rotation_matrix(double degrees) {
+  double radians = (degrees * M_PI) / 180;
+  double p_c = cos(radians);
+  double p_s = sin(radians);
+  return Mat3(Vec3(p_c, 0, -p_s), Vec3(0, 1, 0), Vec3(p_s, 0, p_c));
+}
 
 typedef struct ray {
   Vec3 pos;
@@ -40,14 +48,20 @@ class Dolly {
     }
 
     // + is counterclockwise
-    void set_rotate(double degrees, double steps) {
-      double radians = (degrees * M_PI) / (180 * steps);
-      double p_c = cos(radians);
-      double p_s = sin(radians);
-      Mat3 rot = Mat3(Vec3(p_c, 0, -p_s), Vec3(0, 1, 0), Vec3(p_s, 0, p_c));
-
+    void set_pan(double degrees, double steps) {
+      Mat3 rot =  get_rotation_matrix(degrees / steps);
       for (int i = 0; i < steps; i++) {
         curr.dir = rot * curr.dir;
+        frames.push(curr);
+      }
+    }
+
+    void set_rotate(double radius, double degrees, double steps) {
+      Mat3 rot =  get_rotation_matrix(degrees / steps);
+      Vec3 center = curr.pos + radius * curr.dir;
+      for (int i = 0; i < steps; i++) {
+        curr.pos = center + rot * (curr.pos - center);
+        curr.dir = (center - curr.pos).normalize();
         frames.push(curr);
       }
     }

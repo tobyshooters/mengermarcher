@@ -1,7 +1,9 @@
 #ifndef __VEC3_H__
 #define __VEC3_H__
 #include <cmath>
+#include <iostream>
 #include <algorithm>
+#include <iomanip>
 #include "utils.h"
 
 // Vec3 Implementation
@@ -35,6 +37,11 @@ class Vec3 {
 
 // Vector Functions
 // ----------------
+
+inline std::ostream& operator<<(std::ostream& os, const Vec3& v) {
+  os << "[ " << std::setw(4) << v.x << ", " << std::setw(4) << v.y << ", " << std::setw(4) << v.z << " ]";
+  return os;
+}
 
 inline Vec3 operator* (const double& c, const Vec3& v) {
   return Vec3(c * v.x, c * v.y, c * v.z);

@@ -1,10 +1,13 @@
 ## Bare-bones Ray Marching of Shaded Fractal Surfaces
 
+A project report is available in `/docs/report.pdf`, exploring some of the techniques explored in this project.
+
 `make && ./render && open scene.gif`
 
 ```
-.
-├── images           // rendering examples
+├── images
+│   ├── expo         // rendering highlights
+│   └── process      // process images
 └── src
     ├── render.cpp   // main ray marching
     ├── sdf.cpp/h    // definition of signed distance functions
@@ -35,7 +38,7 @@ Dependencies: `ImageMagick`, for GIF generation
 - Multiple light sources
 - Light attenuation
 - Supersampling for Anti-aliasing
-- Camera movement API (translation and rotation)
+- Camera movement API (translation, pan, and rotation)
 
 ### Motivation
 - Coding graphics code from scratch, without the abstractions of OpenGL APIs

@@ -23,9 +23,9 @@ using namespace std;
 // Note: rendering constants defined in render();
 
 const int  NUM_THREADS      = 4;
-const int  SCREEN_WIDTH     = 640;
-const int  SCREEN_HEIGHT    = 480;
-const int  SAMPLE_RATE      = 1;
+const int  SCREEN_WIDTH     = 1000;
+const int  SCREEN_HEIGHT    = 1000;
+const int  SAMPLE_RATE      = 2;
 const int  MARCH_ITERATIONS = 1024;
 const bool SHADING          = true;
 const int  SHADE_ITERATIONS = 1024;
@@ -37,8 +37,8 @@ const int  SHADE_ITERATIONS = 1024;
 void generate_image(string path, vector<Vec3>& pixels, int width, int height) {
   ofstream ofs(path, ios::binary);
   ofs << "P6\n" << width << " " << height << "\n255\n";
-  for (size_t pixel = 0; pixel < height * width; pixel++) {
-    for (size_t channel = 0; channel < 3; channel++) {
+  for (int pixel = 0; pixel < height * width; pixel++) {
+    for (int channel = 0; channel < 3; channel++) {
       ofs << (char) clamp((int) (255 * pixels[pixel][channel]), 0, 255);
     }
   }
@@ -51,7 +51,7 @@ void generate_image(string path, vector<Vec3>& pixels, int width, int height) {
 // Use gradient to find normal vector to SDF
 
 Vec3 SDF_normal(const Vec3& pos, double (*SDF)(const Vec3&)) {
-  const double eps = 0.1;
+  const double eps = 0.001;
   double d = SDF(pos);
   double normal_x = SDF(pos + Vec3(eps, 0, 0)) - d;
   double normal_y = SDF(pos + Vec3(0, eps, 0)) - d;
@@ -77,7 +77,7 @@ double calculate_intensity(const Vec3& light_pos, const Vec3& collision_pos, dou
 
 double march_ray(const Vec3& origin, const Vec3& direction, double (*SDF)(const Vec3&)) {
   double t = 0.001;
-  for (size_t i = 0; i < MARCH_ITERATIONS; i++) {
+  for (int i = 0; i < MARCH_ITERATIONS; i++) {
     double d = SDF(origin + t * direction);
     if (d < 0.0001) return t;
     t += d;
@@ -98,7 +98,7 @@ double compute_shading(const Vec3& light_pos, const Vec3& collision_pos, double 
   double res = 1.0;
   double t = 0.001;
 
-  for (size_t i = 0; i < SHADE_ITERATIONS; i++) {
+  for (int i = 0; i < SHADE_ITERATIONS; i++) {
     double d = SDF(collision_pos + t * direction);
     if (d < 0.0001) return 0.0;
     res = min(res, k * d / t);
@@ -127,8 +127,8 @@ Vec3 phong_reflection(const Vec3& diffuse_color,
   Vec3 R = (N * dot(L, N) * 2.0) - L;
   Vec3 V = (camera_pos - collision_pos).normalize();
 
-  Vec3 diffuse = attenuation * diffuse_color * dot(L, N);
-  Vec3 specular = attenuation * specular_color * pow(dot(R, V), specular_exponent);
+  Vec3 diffuse = attenuation * diffuse_color * clamp(dot(L, N), 0.0, 1.0);
+  Vec3 specular = attenuation * specular_color * pow(clamp(dot(R, V), 0.0, 1.0), specular_exponent);
   return diffuse + specular;
 }
 
@@ -140,7 +140,7 @@ Vec3 phong_reflection(const Vec3& diffuse_color,
 // X, Y values are centered at 0.5 offsets of pixel index
 // Y multiplied by -1 so zero is at bottom
 
-Vec3 get_direction(const size_t row, const size_t col, const size_t width, const size_t height, const double fov) {
+Vec3 get_direction(const int row, const int col, const int width, const int height, const double fov) {
   double dir_x = (col + 0.5) - width / 2.0;
   double dir_y = -1.0 * (row + 0.5) + height / 2.0;
   double dir_z = -1.0 * height / (2.0 * tan(fov/2.0));
@@ -175,6 +175,7 @@ void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
 
   // RENDERING CONSTANTS
   const vector<Vec3> lights        { Vec3(-2, 0, 0), Vec3(0, 0, 2) };
+  /* const vector<Vec3> lights        { Vec3(2, 4, 2), Vec3(-0.5, 4, 2) }; */
   const Vec3         diffuse_color = Vec3(0.7, 0.2, 0.9);
   double (*SDF)      (const Vec3&) = SDF_scene;
   const Mat3         orient_ray    = camera_matrix(camera_dir);
@@ -186,7 +187,7 @@ void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
   int samples_height = SCREEN_HEIGHT * SAMPLE_RATE;
   int num_samples = samples_width * samples_height;
 
-  for (size_t n = 0; n < num_samples; n++) {
+  for (int n = 0; n < num_samples; n++) {
     int r = n / samples_width; int c = n % samples_width;
 
     Vec3 ray_dir = orient_ray * get_direction(r, c, samples_width, samples_height, fov);
@@ -228,10 +229,10 @@ int main() {
   cout << "Generating scene..." << endl;;
   ThreadPool frame_pool(NUM_THREADS);
 
-  Dolly camera_rig(Vec3(0, 0, 1.5), Vec3(0, 0, -1));
-  camera_rig.set_translate(Vec3(0, 0, 0), 5);
-  camera_rig.set_rotate(-90.0, 5);
-  camera_rig.set_translate(Vec3(-1.0, 0, 0), 5);
+  Dolly camera_rig(Vec3(0, 0, 3.5), Vec3(0, 0, -1));
+  camera_rig.set_translate(Vec3(0, 0, 0), 10);
+  camera_rig.set_pan(270, 9);
+  camera_rig.set_translate(Vec3(-4, 0, 0), 10);
 
   int num_frames = camera_rig.num_moves();
   cout << "Number of frames: " << num_frames << endl;
@@ -248,7 +249,7 @@ int main() {
   frame_pool.wait();
 
   cout << endl << "Converting scene to gif..." << endl;
-  system("convert -delay 10 -loop 0 image*.ppm scene.gif && rm -rf *.ppm");
+  system("convert -delay 20 -loop 0 image*.ppm scene.gif && rm -rf *.ppm");
   cout << "Done!" << endl;
 
   return 0;
