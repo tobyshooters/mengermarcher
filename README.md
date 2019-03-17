@@ -1,7 +1,5 @@
 ## Bare-bones Ray Marching of Shaded Fractal Surfaces
 
-![](images/process/15_mega.gif)
-
 A project report is available at `/docs/report.pdf`, explaining some of the techniques explored in this project.
 
 `make && ./render && open scene.gif`
@@ -51,3 +49,5 @@ Dependencies: `ImageMagick`, for GIF generation
 - TinyKaboom: <https://github.com/ssloy/tinykaboom/wiki/KABOOM!-in-180-lines-of-code>
 - Fractal SDFs: <http://blog.hvidtfeldts.net/index.php/2011/06/distance-estimated-3d-fractals-part-i/>
 - Inigo Quilez Ray Marching: <https://www.iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm>
+
+![](images/around_and_in.gif)

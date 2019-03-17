@@ -55,7 +55,8 @@ double SDF_sphere_repeated(const Vec3& p, const double sphere_radius, const doub
 }
 
 double SDF_cross(const Vec3& p) {
-  double inf = 1000000.0;
+  /* double inf = 1000000.0; */
+  double inf = 3.0;
   double box1 = SDF_box(p, Vec3(inf, 1.0, 1.0));
   double box2 = SDF_box(p, Vec3(1.0, inf, 1.0));
   double box3 = SDF_box(p, Vec3(1.0, 1.0, inf));
@@ -97,7 +98,7 @@ double SDF_menger(const Vec3& p, int iterations) {
 // -----------------------
 
 double SDF_scene(const Vec3& p) {
-  double d1 = SDF_menger(p, 5);
+  double d1 = SDF_sphere(p, 1);
   double d2 = SDF_plane(p, Vec3(0, -1.5, 0), Vec3(0, 1, 0));
   return SDF_union(d1, d2);
 }

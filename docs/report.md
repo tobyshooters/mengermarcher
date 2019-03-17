@@ -5,17 +5,26 @@ geometry: margin=3cm
 ## Menger Marcher by Cristobal Sciutto
 ### Bare-bones Ray Marching of Shaded Fractal Signed Distance Functions
 
-*github.com/tobyshooters/mengermarcher*
+Created Assets: *github.com/tobyshooters/mengermarcher* in `/images`
+
+Video: *github.com/tobyshooters/mengermarcher* in `/docs/video.mp4`
 
 ### Project Description
 In this project, I implemented the ray-marching rendering method from scratch and create interesting patterns with signed distance functions. The goal was to explore implicit geometry representations, and the facility of describing recursive structures with them. Another central aim was to understand more fundamentally the systems side of these implementations. In this vein, I implemented all classes used (e.g. Vec3, Mat3, animation), and avoided using abstractions such as OpenGL APIs.
 
-Below I present a walkthrough of the majority of features implemented. The full codebase is available at *github.com/tobyshooters/mengermarcher* for further inspection. Beyond the features elucidated below, the code also:
+
+Below I present a walkthrough of the majority of features implemented. Beyond the features elucidated below, the code also:
 
 - Provides Supersampling capabilities
 - Generates PPM images from an array of pixel values 
 - Implements Vec3 and Mat3
 - Implements Semaphore and Threadpool (based on CS110) for concurrency of rendering
+
+### Install Instructions
+1. Clone repo: `git clone https://github.com/tobyshooters/mengermarcher.git`
+2. Install Image Magick dependency: `brew install imagemagick`
+3. Make: `cd src && make`
+4. Usage: `./render && open scene.gif`
 
 #### Ray-marching Algorithm
 
@@ -29,7 +38,7 @@ def SDF_sphere(Vec3 p, Vec3 c, double r) {
 }
 ```
 
-Thus, ray-marching consists of evaluating the distance from origin of the ray, and then "marching" across the ray that distance. This is best visualized in Figure 1.
+Thus, ray-marching consists of evaluating the distance from the surface, and then "marching" across the ray that distance. This is best visualized in Figure 1.
 
 ![ray-marching illustration](./figures/ray_marching.jpg){ height=128px }
 

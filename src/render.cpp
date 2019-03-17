@@ -23,12 +23,12 @@ using namespace std;
 // Note: rendering constants defined in render();
 
 const int  NUM_THREADS      = 4;
-const int  SCREEN_WIDTH     = 1000;
-const int  SCREEN_HEIGHT    = 1000;
-const int  SAMPLE_RATE      = 2;
+const int  SCREEN_WIDTH     = 640;
+const int  SCREEN_HEIGHT    = 480;
+const int  SAMPLE_RATE      = 1;
 const int  MARCH_ITERATIONS = 1024;
 const bool SHADING          = true;
-const int  SHADE_ITERATIONS = 1024;
+const int  SHADE_ITERATIONS = 512;
 
 // generate_image
 // --------------
@@ -174,8 +174,8 @@ void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
   cout << "...rendering frame " << frame_id << endl;;
 
   // RENDERING CONSTANTS
-  const vector<Vec3> lights        { Vec3(-2, 0, 0), Vec3(0, 0, 2) };
-  /* const vector<Vec3> lights        { Vec3(2, 4, 2), Vec3(-0.5, 4, 2) }; */
+  const vector<Vec3> lights        { Vec3(-2, 1.5, 1.5), Vec3(0, 1.5, 0) };
+  /* const vector<Vec3> lights        { Vec3(-2, 0, 0), Vec3(0, 0, 2) }; */
   const Vec3         diffuse_color = Vec3(0.7, 0.2, 0.9);
   double (*SDF)      (const Vec3&) = SDF_scene;
   const Mat3         orient_ray    = camera_matrix(camera_dir);
@@ -200,6 +200,7 @@ void render(string frame_id, const Vec3 camera_pos, const Vec3 camera_dir) {
         double atten = 1.0 / (1 + 0.1 * (light_pos - collision_pos).norm());
         color += phong_reflection(diffuse_color, atten, light_pos, collision_pos, camera_pos, SDF);
       }
+      color /= lights.size();
     }
 
     double shade = 1.0;
@@ -229,10 +230,10 @@ int main() {
   cout << "Generating scene..." << endl;;
   ThreadPool frame_pool(NUM_THREADS);
 
-  Dolly camera_rig(Vec3(0, 0, 3.5), Vec3(0, 0, -1));
-  camera_rig.set_translate(Vec3(0, 0, 0), 10);
-  camera_rig.set_pan(270, 9);
-  camera_rig.set_translate(Vec3(-4, 0, 0), 10);
+  Dolly camera_rig(Vec3(0, 0, 4), Vec3(0, 0, -1));
+  /* camera_rig.set_translate(Vec3(0, 0, 3), 5); */
+  /* camera_rig.set_rotate(3, -90, 5); */
+  /* camera_rig.set_pan(-15, 3); */
 
   int num_frames = camera_rig.num_moves();
   cout << "Number of frames: " << num_frames << endl;
