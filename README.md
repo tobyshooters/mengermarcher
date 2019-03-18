@@ -5,9 +5,7 @@ A project report is available at `/docs/report.pdf`, explaining some of the tech
 `make && ./render && open scene.gif`
 
 ```
-├── images
-│   ├── expo         // rendering highlights
-│   └── process      // process images
+├── images           // sample rendered assets
 └── src
     ├── render.cpp   // main ray marching
     ├── sdf.cpp/h    // definition of signed distance functions
