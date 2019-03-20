@@ -5,9 +5,7 @@ A project report is available at `/docs/report.pdf`, explaining some of the tech
 `make && ./render && open scene.gif`
 
 ```
-├── images
-│   ├── expo         // rendering highlights
-│   └── process      // process images
+├── images           // sample rendered assets
 └── src
     ├── render.cpp   // main ray marching
     ├── sdf.cpp/h    // definition of signed distance functions
@@ -49,5 +47,7 @@ Dependencies: `ImageMagick`, for GIF generation
 - TinyKaboom: <https://github.com/ssloy/tinykaboom/wiki/KABOOM!-in-180-lines-of-code>
 - Fractal SDFs: <http://blog.hvidtfeldts.net/index.php/2011/06/distance-estimated-3d-fractals-part-i/>
 - Inigo Quilez Ray Marching: <https://www.iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm>
+
+### Sample Asset
 
 ![](images/around_and_in.gif)
